@@ -1,8 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = document.getElementById('refresh-btn');
+    const exportBtn = document.getElementById('export-btn');
     const notesContainer = document.getElementById('notes-container');
     const btnText = refreshBtn.querySelector('.btn-text');
     const spinner = refreshBtn.querySelector('.spinner');
+    
+    let currentNotesData = [];
 
     // Parse dates to a more readable format
     const formatDate = (dateString) => {
@@ -32,7 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Failed to fetch notes');
             
             const data = await response.json();
+            currentNotesData = data.notes;
             renderNotes(data.notes);
+            exportBtn.disabled = currentNotesData.length === 0;
         } catch (error) {
             console.error('Error fetching notes:', error);
             notesContainer.innerHTML = `
@@ -84,12 +89,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h2 class="note-title">${note.title}</h2>
                         <div class="note-date">${dateStr}</div>
                     </div>
-                    <a href="${tweetUrl}" target="_blank" rel="noopener noreferrer" class="tweet-btn">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                        </svg>
-                        Tweet
-                    </a>
+                    <div class="card-actions">
+                        <button class="copy-btn" data-content="${encodeURIComponent(plainTextContent)}">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy
+                        </button>
+                        <a href="${tweetUrl}" target="_blank" rel="noopener noreferrer" class="tweet-btn">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                            Tweet
+                        </a>
+                    </div>
                 </div>
                 <div class="note-content">
                     ${note.content}
@@ -98,11 +112,64 @@ document.addEventListener('DOMContentLoaded', () => {
             
             notesContainer.appendChild(card);
         });
+
+        // Add event listeners to copy buttons
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const targetBtn = e.currentTarget;
+                const textToCopy = decodeURIComponent(targetBtn.getAttribute('data-content'));
+                try {
+                    await navigator.clipboard.writeText(textToCopy);
+                    const originalHTML = targetBtn.innerHTML;
+                    targetBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Copied!
+                    `;
+                    targetBtn.classList.add('copied');
+                    setTimeout(() => {
+                        targetBtn.innerHTML = originalHTML;
+                        targetBtn.classList.remove('copied');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            });
+        });
     };
 
-    // Initial fetch
-    fetchNotes();
+    // CSV Export functionality
+    const exportToCSV = () => {
+        if (currentNotesData.length === 0) return;
 
-    // Setup event listener
+        // Create CSV header
+        const headers = ['Date', 'Title', 'Link', 'ContentSnippet'];
+        let csvContent = headers.join(',') + '\\n';
+
+        // Add rows
+        currentNotesData.forEach(note => {
+            const date = note.date || '';
+            const title = (note.title || '').replace(/"/g, '""'); // Escape quotes
+            const link = note.link || '';
+            const textContent = stripHtml(note.content).trim().replace(/"/g, '""');
+            
+            csvContent += `"${date}","${title}","${link}","${textContent}"\\n`;
+        });
+
+        // Create blob and download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `bigquery_release_notes_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Setup event listeners
     refreshBtn.addEventListener('click', fetchNotes);
+    exportBtn.addEventListener('click', exportToCSV);
 });

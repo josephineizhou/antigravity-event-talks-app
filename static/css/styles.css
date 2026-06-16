@@ -80,13 +80,18 @@ h1 {
     -webkit-text-fill-color: transparent;
 }
 
-/* Button */
-.refresh-btn {
+/* Header Actions */
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+/* Button Base */
+.action-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background-color: var(--primary-color);
-    color: white;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 9999px;
@@ -97,19 +102,41 @@ h1 {
     box-shadow: var(--shadow-sm);
 }
 
+.action-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.action-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Specific Buttons */
+.refresh-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
 .refresh-btn:hover:not(:disabled) {
     background-color: var(--primary-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
 }
 
-.refresh-btn:active:not(:disabled) {
-    transform: translateY(0);
+.export-btn {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
-.refresh-btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+.export-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
 }
 
 /* Note Card - Glassmorphism */
@@ -150,24 +177,50 @@ h1 {
     color: var(--text-secondary);
 }
 
-.tweet-btn {
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tweet-btn, .copy-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    background-color: rgba(29, 161, 242, 0.1);
-    color: var(--twitter-color);
-    border: 1px solid rgba(29, 161, 242, 0.2);
+    gap: 0.4rem;
     padding: 0.4rem 0.75rem;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.tweet-btn {
+    background-color: rgba(29, 161, 242, 0.1);
+    color: var(--twitter-color);
+    border: 1px solid rgba(29, 161, 242, 0.2);
 }
 
 .tweet-btn:hover {
     background-color: var(--twitter-color);
     color: white;
+}
+
+.copy-btn {
+    background-color: rgba(15, 23, 42, 0.05);
+    color: var(--text-secondary);
+    border: 1px solid var(--card-border);
+}
+
+.copy-btn:hover {
+    background-color: var(--text-secondary);
+    color: white;
+}
+
+.copy-btn.copied {
+    background-color: #10b981;
+    color: white;
+    border-color: #10b981;
 }
 
 .note-content {
