@@ -169,6 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link);
     };
 
+    // Initial fetch on page load
+    fetchNotes();
+
     // Setup event listeners
     refreshBtn.addEventListener('click', fetchNotes);
     exportBtn.addEventListener('click', exportToCSV);
