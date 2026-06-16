@@ -1,9 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     const refreshBtn = document.getElementById('refresh-btn');
     const exportBtn = document.getElementById('export-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const notesContainer = document.getElementById('notes-container');
     const btnText = refreshBtn.querySelector('.btn-text');
     const spinner = refreshBtn.querySelector('.spinner');
+    
+    // Check saved theme or system preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light' || (!savedTheme && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+        document.body.classList.add('light-mode');
+    }
     
     let currentNotesData = [];
 
@@ -175,4 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup event listeners
     refreshBtn.addEventListener('click', fetchNotes);
     exportBtn.addEventListener('click', exportToCSV);
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    });
 });
